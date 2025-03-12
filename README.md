@@ -1,8 +1,8 @@
 # 🐟 XianYuApis - 闲鱼第三方API集成库
 
-[![GitHub license](https://img.shields.io/github/license/cv-cat/XianYuApis)](https://github.com/cv-cat/XianYuApis/blob/main/LICENSE)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/)
-[![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Python Version](https://img.shields.io/badge/nodejs-18%2B-blue)](https://nodejs.org/zh-cn/)
+
 
 非官方闲鱼开放API接口封装库，提供安全可靠的闲鱼平台功能访问能力。
 
