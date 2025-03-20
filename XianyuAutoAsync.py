@@ -1,6 +1,8 @@
 import base64
 import json
 import asyncio
+import time
+
 from loguru import logger
 import websockets
 from XianyuApis import XianyuApis
@@ -18,8 +20,6 @@ class XianyuLive:
         self.device_id = generate_device_id(self.myid)
         self.ws = None
 
-    async def send_ack(self, ws, Packet_sid):
-        pass
 
     async def create_chat(self, ws, toid, item_id='891198795482'):
         msg = {
@@ -109,13 +109,23 @@ class XianyuLive:
             }
         }
         await ws.send(json.dumps(msg))
-        msg = {"lwp":"/r/Conversation/listNewestPagination","headers":{"mid":"8971741704675924 0"},"body":[9007199254740991,50]}
-        await ws.send(json.dumps(msg))
-        msg = {"lwp":"/r/SingleChatConversation/create","headers":{"mid":"3831741704675925 0"},"body":[{"pairFirst":"3888777108@goofish","pairSecond":"2202640918079@goofish","bizType":"1","extension":{"itemId":"897742748011"},"ctx":{"appVersion":"1.0","platform":"web"}}]}
-        await ws.send(json.dumps(msg))
-        msg = {"lwp":"/r/SyncStatus/getState","headers":{"mid":"5541741704675930 0"},"body":[{"topic":"sync"}]}
-        await ws.send(json.dumps(msg))
-        msg = {"lwp":"/r/SyncStatus/ackDiff","headers":{"mid":"5701741704675979 0"},"body":[{"pipeline":"sync","tooLong2Tag":"PNM,1","channel":"sync","topic":"sync","highPts":0,"pts":1741704666107000,"seq":0,"timestamp":1741704675971}]}
+        current_time = int(time.time() * 1000)
+        msg = {
+            "lwp": "/r/SyncStatus/ackDiff",
+            "headers": {"mid": generate_mid()},
+            "body": [
+                {
+                    "pipeline": "sync",
+                    "tooLong2Tag": "PNM,1",
+                    "channel": "sync",
+                    "topic": "sync",
+                    "highPts": 0,
+                    "pts": current_time * 1000,
+                    "seq": 0,
+                    "timestamp": current_time
+                }
+            ]
+        }
         await ws.send(json.dumps(msg))
         logger.info('init')
 
@@ -147,7 +157,18 @@ class XianyuLive:
                 except Exception as e:
                     pass
 
-    async def main(self, toid, item_id, text):
+    async def heart_beat(self, ws):
+        while True:
+            msg = {
+                "lwp": "/!",
+                "headers": {
+                    "mid": generate_mid()
+                 }
+            }
+            await ws.send(json.dumps(msg))
+            await asyncio.sleep(15)
+
+    async def main(self):
         headers = {
             "Cookie": self.cookies_str,
             "Host": "wss-goofish.dingtalk.com",
@@ -160,18 +181,17 @@ class XianyuLive:
             "Accept-Language": "zh-CN,zh;q=0.9",
         }
         async with websockets.connect(self.base_url, extra_headers=headers) as websocket:
-            # await self.init(websocket)
-
             asyncio.create_task(self.init(websocket))
+            asyncio.create_task(self.heart_beat(websocket))
             async for message in websocket:
+                # logger.info(f"message: {message}")
                 try:
-                    # logger.info(f"message: {message}")
                     message = json.loads(message)
                     ack = {
                         "code": 200,
                         "headers": {
-                            "mid": message["headers"]["mid"],
-                            "sid": message["headers"]["sid"]
+                            "mid": message["headers"]["mid"] if "mid" in message["headers"] else generate_mid(),
+                            "sid": message["headers"]["sid"] if "sid" in message["headers"] else '',
                         }
                     }
                     if 'app-key' in message["headers"]:
@@ -181,36 +201,44 @@ class XianyuLive:
                     if 'dt' in message["headers"]:
                         ack["headers"]["dt"] = message["headers"]["dt"]
                     await websocket.send(json.dumps(ack))
-
-                    data = message["body"]["syncPushPackage"]["data"][0]["data"]
-                    data = decrypt(data)
-                    message = json.loads(data)
-                    logger.info(f"message: {message}")
-
-
-                    send_user_name = message["1"]["10"]["reminderTitle"]
-                    send_user_id = message["1"]["10"]["senderUserId"]
-                    send_message = message["1"]["10"]["reminderContent"]
-                    logger.info(f"user: {send_user_name}, 发送给我的信息 message: {send_message}")
-                    # reply = f'Hello, {send_user_name}! I am a robot. I am not available now. I will reply to you later.'
-                    reply = f'{send_user_name} 说了: {send_message}'
-                    cid = message["1"]["2"]
-                    cid = cid.split('@')[0]
-                    await self.send_msg(websocket, cid, send_user_id, reply)
                 except Exception as e:
-                    logger.error(e)
+                    pass
+
+                try:
+                    data = message["body"]["syncPushPackage"]["data"][0]["data"]
+                    logger.info(f"message: {data}")
+                    try:
+                        data = json.loads(data)
+                        logger.info(f"无需解密 message: {data}")
+                    except Exception as e:
+                        logger.error(f'1 {e}')
+                        data = decrypt(data)
+                        message = json.loads(data)
+                        logger.info(f"message: {message}")
+
+                        send_user_name = message["1"]["10"]["reminderTitle"]
+                        send_user_id = message["1"]["10"]["senderUserId"]
+                        send_message = message["1"]["10"]["reminderContent"]
+                        logger.info(f"user: {send_user_name}, 发送给我的信息 message: {send_message}")
+                        # reply = f'Hello, {send_user_name}! I am a robot. I am not available now. I will reply to you later.'
+                        reply = f'{send_user_name} 说了: {send_message}'
+                        cid = message["1"]["2"]
+                        cid = cid.split('@')[0]
+                        await self.send_msg(websocket, cid, send_user_id, reply)
+                except Exception as e:
+                    logger.error(f'2 {e}')
 
 
 if __name__ == '__main__':
-    cookies_str = r'cna=aKpWII3TuhYCAXAC/B2h9RUU; xlly_s=1; t=12eea791e544f5c869c344cd560c13d5; tracknick=tb093613712; unb=3888777108; havana_lgc2_77=eyJoaWQiOjM4ODg3NzcxMDgsInNnIjoiMjkwOTY1ZjkxZTVlN2ZkZTQyMTE0MDM4NGJjOWFiZDAiLCJzaXRlIjo3NywidG9rZW4iOiIxeWw4LUcwa0l0YWZxT0hCYy1iZ3ZxQSJ9; _hvn_lgc_=77; havana_lgc_exp=1744259448511; mtop_partitioned_detect=1; _m_h5_tk=ca8b4dd100957488d45be53e94dc572f_1741713249137; _m_h5_tk_enc=f33ec6baacf86eac88d07ffe868e3e57; _samesite_flag_=true; sgcookie=E100lZr6TdR%2F%2BM8eOe%2FYNfKSzRbSpMCf4UIc3o1d%2F7W8mC4HM1DrJ%2F5OtlUg0oBOx00QqwiqNvs72HeWdtbEsXHkRezIHmW30%2BxeGtEBSUKRDa0%3D; cookie2=20517583879846b885456691e45502f4; csg=acfb6894; _tb_token_=f470345e5eb07; sdkSilent=1741791058895; tfstk=gN_mTANz4i-fIy6KHT8bvybQxIE-ljT6DO39BFpa4LJSHx3A_AXGU9CxkNCwIOXJFsKAS1gM_1W_GdFb2s1X5FyLpd4dGs_C_o4beFPNaFdGStWSSs1X5bG-QkIPGAm1ffXw7O8y4CAw7IRNQLRyFCOZ3Cu4Z_JWUqJw3F8yaCdq7cWw77fyFC8wgbPt0pQNYayz4Akd0eTdrIxDLsqI7VboJnvFgL0aBaA0Rp52EVuwHXehz_fYn21JlwBH9tUro9fNOG-lSYyHCafPuG5SnRR5btLyHerqZEQfgM-N8RiNKEXMYZ-o_25fgLTkawPtALQkHO7D4W3HXU7pYES8V-K9oBXNltci795R9Zt5SJDyCidBzCb_TcvMbg8Z4DRlNVOz6aosfnRWZpdKjsgqRprhT7Vov1t2NB9LZ7msfnRWZpFuZDQ60QOBp'
+    cookies_str = r''
 
     xianyuLive = XianyuLive(cookies_str)
 
 
     # 主动发送一次消息
-    to_id = '2202640918079'
-    item_id = '897742748011'
+    # to_id = '2202640918079'
+    # item_id = '897742748011'
     # asyncio.run(xianyuLive.send_msg_once(to_id, item_id, 'Hello, World!'))
 
-    # 常驻进程
-    asyncio.run(xianyuLive.main(to_id, item_id, 'Hello, World!'))
+    # 常驻进程 用于接收消息和自动回复
+    asyncio.run(xianyuLive.main())
