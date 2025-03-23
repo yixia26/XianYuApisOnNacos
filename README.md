@@ -4,7 +4,7 @@
 [![Python Version](https://img.shields.io/badge/nodejs-18%2B-blue)](https://nodejs.org/zh-cn/)
 
 **✨ 非官方闲鱼开放API接口封装库，通过网络请求操作所有的闲鱼操作，提供安全可靠的闲鱼平台功能访问能力。**
-
+**⚠️ 注意：如有侵权联系作者删除。**
 
 
 | 模块       | 已实现                                                                             |
@@ -17,7 +17,7 @@
 - https://github.com/shaxiu/XianyuAutoAgent
 
 
-⚠️ **注意**：如有侵权联系作者删除。
+
 
 ## 🌟 核心特性
 
