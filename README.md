@@ -62,3 +62,13 @@ python XianyuAutoAsync.py.py
   <img src="./author/wx_pay.png" width="400px" alt="微信赞赏码"> 
   <img src="./author/zfb_pay.jpg" width="400px" alt="支付宝收款码">
 </div>
+
+
+## 📈 Star 趋势
+<a href="https://www.star-history.com/#cv-cat/XianYuApis&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=cv-cat/XianYuApis&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=cv-cat/XianYuApis&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=cv-cat/XianYuApis&type=Date" />
+ </picture>
+</a>
