@@ -43,12 +43,12 @@ npm install
 
 ### 🚀运行项目
 ```
-python XianyuAutoAsync.py.py
+python XianyuAutoAsync.py
 ```
 
 ### 🗝️注意事项
 - XianyuAutoAsync.py中的代码是接收发消息的主入口，可以根据自己的需求进行修改
-- XianyuApis.py.py中的代码包含了api接口的模板，sign参数已经解密，可以根据自己的需求进行修改，添加其他的接口
+- XianyuApis.py中的代码包含了api接口的模板，sign参数已经解密，可以根据自己的需求进行修改，添加其他的接口
 
 
 ## 🧸额外说明
