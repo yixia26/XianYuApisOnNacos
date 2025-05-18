@@ -1,2 +1,9 @@
 requests
 loguru
+PyExecJS
+fastapi>=0.103.1
+uvicorn>=0.23.2
+websockets>=11.0.3
+nacos-sdk-python>=0.1.12
+pydantic>=2.4.2
+python-multipart>=0.0.6

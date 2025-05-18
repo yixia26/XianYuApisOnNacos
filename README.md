@@ -72,3 +72,149 @@ python XianyuAutoAsync.py
    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=cv-cat/XianYuApis&type=Date" />
  </picture>
 </a>
+
+# 闲鱼 API 服务
+
+这是一个基于 FastAPI 的闲鱼 API 服务，提供闲鱼聊天、消息发送等功能，并注册到 Nacos 服务发现中心。
+
+## 功能特点
+
+- 创建闲鱼会话
+- 发送闲鱼消息
+- 创建聊天对话
+- 自动回复功能
+- 注册到 Nacos 服务发现中心
+
+## 安装依赖
+
+```bash
+pip install -r requirements.txt
+```
+
+## 环境变量配置
+
+可以通过环境变量配置服务参数：
+
+- `NACOS_SERVER_ADDR`: Nacos 服务器地址，默认为 `localhost:8848`
+- `NACOS_NAMESPACE`: Nacos 命名空间，默认为 `public`
+- `NACOS_USERNAME`: Nacos 用户名，默认为 `nacos`
+- `NACOS_PASSWORD`: Nacos 密码，默认为 `nacos`
+- `SERVICE_NAME`: 服务名称，默认为 `xy-xianyuApi`
+- `SERVICE_IP`: 服务 IP，默认为 `localhost`
+- `SERVICE_PORT`: 服务端口，默认为 `8000`
+
+## 运行服务
+
+```bash
+uvicorn api:app --host 0.0.0.0 --port 8000 --reload
+```
+
+## Docker 部署
+
+### 构建镜像
+
+```bash
+docker build -t xianyuapi .
+```
+
+### 运行容器
+
+```bash
+docker run -p 8000:8000 \
+  -e NACOS_SERVER_ADDR=nacos-server:8848 \
+  -e SERVICE_IP=container-ip \
+  xianyuapi
+```
+
+## API 接口
+
+### 创建会话
+
+```
+POST /api/v1/session/create
+```
+
+请求体:
+
+```json
+{
+  "cookies_str": "你的闲鱼cookies字符串",
+  "auto_reply": false
+}
+```
+
+### 发送消息
+
+```
+POST /api/v1/message/send
+```
+
+请求体:
+
+```json
+{
+  "session_id": "session_1",
+  "to_id": "接收者ID",
+  "item_id": "商品ID",
+  "text": "要发送的消息"
+}
+```
+
+### 创建聊天
+
+```
+POST /api/v1/chat/create
+```
+
+请求体:
+
+```json
+{
+  "session_id": "session_1",
+  "to_id": "接收者ID",
+  "item_id": "商品ID"
+}
+```
+
+### 列出会话
+
+```
+GET /api/v1/session/list
+```
+
+### 删除会话
+
+```
+DELETE /api/v1/session/{session_id}
+```
+
+### 健康检查
+
+```
+GET /health
+```
+
+## 示例代码
+
+```python
+import requests
+
+# 创建会话
+cookies_str = "your_cookies_string"
+response = requests.post(
+    "http://localhost:8000/api/v1/session/create",
+    json={"cookies_str": cookies_str, "auto_reply": False}
+)
+session_id = response.json()["session_id"]
+
+# 发送消息
+requests.post(
+    "http://localhost:8000/api/v1/message/send",
+    json={
+        "session_id": session_id,
+        "to_id": "receiver_id",
+        "item_id": "item_id",
+        "text": "Hello, World!"
+    }
+)
+```
