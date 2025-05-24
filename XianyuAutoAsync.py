@@ -186,7 +186,7 @@ class XianyuLive:
             "timestamp": int(time.time())
         }
         # 使用cid作为键，将消息追加到列表中
-        msg_key = f"msg:{cid}"
+        msg_key = f"customer:message:{cid}"
         self.redis_client.rpush(msg_key, json.dumps(msg_data, ensure_ascii=False))
         logger.info(f"消息已添加到Redis列表: {msg_key}")
 
@@ -200,7 +200,7 @@ class XianyuLive:
             try:
                 # 仅检查当前活跃会话的待发送消息
                 for cid in self.active_cids:
-                    key = f"pending_msg:{cid}"
+                    key = f"ai:pending_msg:{cid}"
                     # 从列表左侧弹出一条待发送消息
                     msg_data_raw = self.redis_client.lpop(key)
                     if msg_data_raw:
